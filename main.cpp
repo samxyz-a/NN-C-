@@ -9,29 +9,57 @@
 #include <utility> // std::pair
 #include <stdexcept> // std::runtime_error
 #include <sstream> // std::stringstream
-int main() {
-    std::cout<<"Yo";
-    return EXIT_SUCCESS;
-}
 
 
-void read_csv(std::string filename) {
-    std::vector<std::pair<std::vector<int>,std::vector<int>>> result;
+std::vector<std::pair<int,std::vector<int>>> read_csv(std::string filename) {
+    std::vector<std::pair<int,std::vector<int>>> result;
 
     std::ifstream myFile(filename);
     if (!myFile.is_open()) {
         throw std::runtime_error("Couldnt open the csv data file");
     }
 
-    std::string line,column;
+    std::string line,colname;
     int val;
 
-
-    if (myFile.good()) {
-        std::getline(myFile,line);
+    while (std::getline(myFile,line)) {
         std::stringstream ss(line);
-        
+        std::pair<int, std::vector<int>> row;
+        int label;
+        ss>>label;
+        if (ss.peek()==',') ss.ignore();
+        std::vector<int> pixels;
+        while (ss>>val){
+            pixels.push_back(val);
+            if (ss.peek()==',') ss.ignore();
+        }
+        row.first=label;
+        row.second=pixels;
+
+        result.push_back(row);
+
     }
+    myFile.close();
+    return result;
+
+}
 
 
+int main() {
+    std::vector<std::pair<int, std::vector<int>>> data=read_csv("../data/mnist_train.csv");
+    int sample = 0;
+
+    for (const auto& [digit, pixelv] : data) {
+        std::cout << "Sample: " << sample << "\n";
+        std::cout << "Label: " << digit << "\n";
+        std::cout << "Pixels: ";
+
+        for (const auto& pixel : pixelv) {
+            std::cout << pixel << " ";
+        }
+
+        std::cout << "\n\n";
+        sample++;
+    }
+    return EXIT_SUCCESS;
 }
