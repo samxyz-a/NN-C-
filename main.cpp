@@ -198,12 +198,13 @@ std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::st
     while (std::getline(myFile,line)) {
         std::stringstream ss(line);
         std::pair<std::vector<double>, std::vector<double>> row;
-        std::vector<double> label;
-        label[val]=1;q
+        std::vector<double> label(10,0.0);
+        ss>>val;
+        label[val]=1;
         if (ss.peek()==',') ss.ignore();
-        std::vector<int> pixels;
+        std::vector<double> pixels;
         while (ss>>val){
-            pixels.push_back(val);
+            pixels.push_back(static_cast<double>(val) / 255.0);
             if (ss.peek()==',') ss.ignore();
         }
         row.first=label;
@@ -219,12 +220,19 @@ std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::st
 
 
 int main() {
-    std::vector<std::pair<int, std::vector<int>>> data=read_csv("../data/mnist_train.csv");
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> data=read_csv("../data/mnist_train.csv");
     int sample = 0;
 
-    for (const auto& [digit, pixelv] : data) {
+    for (const auto& [labelv, pixelv] : data) {
         std::cout << "Sample: " << sample << "\n";
-        std::cout << "Label: " << digit << "\n";
+        std::cout << "Label: " ;
+
+        for (const auto& label : labelv) {
+            std::cout<<label<<" ";
+        }
+
+        std::cout<<"\n";
+
         std::cout << "Pixels: ";
 
         for (const auto& pixel : pixelv) {
