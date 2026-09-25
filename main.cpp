@@ -12,114 +12,130 @@
 #include <random>
 
 class Matrix {
-public:
+private:
     std::vector<std::vector<double>> matrix;
 
-    double get(int pos1,int pos2,std::vector<std::vector<double>>& m) {
-
-        double target;
-        target=m.at(pos1).at(pos2);
-        return target;
+public:
+    double get(int pos1,int pos2) {
+        return matrix.at(pos1).at(pos2);
     }
 
-    void set(int row,int coln,double value,std::vector<std::vector<double>>& m) {
-        double& p=m.at(row).at(coln);
-        p=value;
+    void set(int row,int coln,double value) {
+        matrix.at(row).at(coln)=value;
     }
 
-    std::vector<std::vector<double>> multiply(std::vector<std::vector<double>> m1,std::vector<std::vector<double>> m2) {
-        std::vector<std::vector<double>> m3(m1.size(),std::vector<double>(m2[0].size(), 0.0)); //product result
-        if (m1[0].size()!=m2.size()) {
+    void multiply(const Matrix& m1,const Matrix& m2) {
+        matrix.assign(m1.matrix.size(),std::vector<double>(m2.matrix[0].size(), 0.0)); //product result
+        if (m1.matrix[0].size()!=m2.matrix.size()) {
             throw std::runtime_error("Invalid Multiplication");
         }else {
-            for (int i=0;i<m1.size();i++) {
-                for (int j=0;j<m2[0].size();j++) {
+            for (int i=0;i<m1.matrix.size();i++) {
+                for (int j=0;j<m2.matrix[0].size();j++) {
                     double sum =0;
-                    for (int k=0;k<m1[0].size();k++) {
-                        sum+=m1[i][k]*m2[k][j];
+                    for (int k=0;k<m1.matrix[0].size();k++) {
+                        sum+=m1.matrix[i][k]*m2.matrix[k][j];
                     }
-                    m3[i][j]=sum;
+                    matrix[i][j]=sum;
                 }
             }
         }
-        return m3;
+
     }
 
-    std::vector<std::vector<double>> add(std::vector<std::vector<double>> m1,std::vector<std::vector<double>> m2) {
-        std::vector<std::vector<double>> m3(m1.size(),std::vector<double>(m2[0].size(), 0.0));//added result
+    void add(const Matrix& m1,const Matrix& m2) {
+        matrix.assign(m1.matrix.size(),std::vector<double>(m2.matrix[0].size(), 0.0));//added result
 
-        if (m1[0].size()!=m2[0].size() || m1.size()!=m2.size()) {
+        if (m1.matrix[0].size()!=m2.matrix[0].size() || m1.matrix.size()!=m2.matrix.size()) {
             throw std::runtime_error("Invalid Addition");
         }
 
-        for (int i=0;i<m1.size();i++) {
-            for (int j=0;j<m1[0].size();j++) {
+        for (int i=0;i<m1.matrix.size();i++) {
+            for (int j=0;j<m1.matrix[0].size();j++) {
                 double sum=0;
-                sum+=m1[i][j]+m2[i][j];
-                m3[i][j]=sum;
+                sum+=m1.matrix[i][j]+m2.matrix[i][j];
+                matrix[i][j]=sum;
             }
         }
-        return m3;
     }
 
-    std::vector<std::vector<double>> transpose(std::vector<std::vector<double>> m) {
-        std::vector<std::vector<double>> mt(m[0].size(),std::vector<double>(m.size(), 0.0));
+    void transpose(const Matrix& m) {
+        matrix.assign(m.matrix[0].size(),std::vector<double>(m.matrix.size(), 0.0));
 
-        for (int i=0;i<m.size();i++) {
-            for (int j=0;j<m[0].size();j++) {
-                mt[j][i]=m[i][j];
+        for (int i=0;i<m.matrix.size();i++) {
+            for (int j=0;j<m.matrix[0].size();j++) {
+                matrix[j][i]=m.matrix[i][j];
             }
         }
-        return mt;
     }
 
-     std::vector<std::vector<double>> HP(std::vector<std::vector<double>> m1,std::vector<std::vector<double>> m2) {
-        std::vector<std::vector<double>> m3(m1.size(),std::vector<double>(m1[0].size(), 0.0));
-        if (m1[0].size()!=m2[0].size() || m1.size()!=m2.size()) {
-            throw std::runtime_error("Invalid Addition");
-        }
+    void HP(const Matrix& m1, const Matrix& m2) {
+        if (m1.matrix.size() != m2.matrix.size() ||
+            m1.matrix[0].size() != m2.matrix[0].size()) {
+            throw std::runtime_error("Invalid Hadamard Product");
+            }
 
-        for (int i=0;i<m1.size();i++) {
-            for (int j=0;j<m2[0].size();j++) {
-                double product=1;
-                product*=m1[i][j]*m2[i][j];
-                m3[i][j]=product;
+        matrix.assign(
+            m1.matrix.size(),
+            std::vector<double>(m1.matrix[0].size(), 0.0)
+        );
+
+        for (int i = 0; i < m1.matrix.size(); i++) {
+            for (int j = 0; j < m1.matrix[0].size(); j++) {
+                matrix[i][j] = m1.matrix[i][j] * m2.matrix[i][j];
             }
         }
-        return m3;
     }
 
-    std::vector<std::vector<double>>SM(std::vector<std::vector<double>> m,double factor) {
-        std::vector<std::vector<double>> mp(m.size(),std::vector<double>(m[0].size(), 0.0));
+    void SM(const Matrix& m, double factor) {
+        matrix.assign(
+            m.matrix.size(),
+            std::vector<double>(m.matrix[0].size(), 0.0)
+        );
 
-        for (int i=0;i<m.size();i++) {
-            for (int j=0;j<m[0].size();j++) {
-                mp[i][j]=m[i][j]*factor;
+        for (int i = 0; i < m.matrix.size(); i++) {
+            for (int j = 0; j < m.matrix[0].size(); j++) {
+                matrix[i][j] = m.matrix[i][j] * factor;
             }
         }
-        return mp;
     }
 
-    std::vector<std::vector<double>>RIC(double lower_cap,double higher_cap,int rows,int columns) {
+    void RIC(double lower_cap, double higher_cap, int rows, int columns) {
         std::random_device rd;
         std::mt19937 gen(rd());
-
         std::uniform_real_distribution<double> dist(lower_cap, higher_cap);
 
-        std::vector<std::vector<double>> m(rows,std::vector<double>(columns, 0.0));
+        matrix.assign(
+            rows,
+            std::vector<double>(columns, 0.0)
+        );
 
-        for (int i=0;i<m.size();i++) {
-            for (int j=0;j<m[0].size();j++) {
-                m[i][j]=dist(gen);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                matrix[i][j] = dist(gen);
             }
         }
-
-        return m;
     }
-
 
 };
 
+class Layer{
+public:
+    Matrix weights; //
+    Matrix bias;
+
+    Layer(int input_size,int output_size) {
+        weights.RIC(-0.5,0.5,input_size,output_size);
+        bias.RIC(-0.5,0.5,1,output_size);
+    }
+
+    Matrix forward(Matrix input) {
+        Matrix res,result;
+        res.multiply(input,weights);
+        result.add(res,bias);
+
+        return result;
+    }
+};
 
 std::vector<std::pair<int,std::vector<int>>> read_csv(std::string filename) {
     std::vector<std::pair<int,std::vector<int>>> result;
