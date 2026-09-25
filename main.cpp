@@ -180,6 +180,24 @@ public:
         return result;
     }
 
+    Matrix backward(Matrix input, Matrix grad_output, double learning_rate) {
+        Matrix grad_input,grad_weights,grad_bias, weights_T;
+        weights_T.transpose(weights);
+        grad_input.multiply(grad_output,weights_T);
+        grad_weights.multiply(input,grad_output);
+        grad_bias=grad_output;
+
+        //update weights and bias
+        Matrix scaled_grad_weights,scaled_grad_bias;
+        scaled_grad_weights.SM(grad_weights,-learning_rate);
+        scaled_grad_bias.SM(grad_bias,-learning_rate);
+
+        weights.add(weights,scaled_grad_weights);
+        bias.add(bias,scaled_grad_bias);
+
+        return grad_input;
+    }
+
 
 
 };
