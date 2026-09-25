@@ -152,7 +152,23 @@ public:
         }
     }
 
+    //to calculate initial loss
+    double loss(const Matrix& predicted, const Matrix& actual) {
+        if (predicted.matrix.size() != actual.matrix.size() ||
+            predicted.matrix[0].size() != actual.matrix[0].size()) {
+            throw std::runtime_error("Invalid Loss Calculation");
+        }
 
+        double total_loss = 0.0;
+        for (int i = 0; i < predicted.matrix.size(); i++) {
+            for (int j = 0; j < predicted.matrix[0].size(); j++) {
+                double diff = predicted.matrix[i][j] - actual.matrix[i][j];
+                total_loss += diff * diff;
+            }
+        }
+        return total_loss / (predicted.matrix.size() * predicted.matrix[0].size());
+    }
+            
 };
 
 class Layer{
