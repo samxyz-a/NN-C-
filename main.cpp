@@ -10,6 +10,22 @@
 #include <stdexcept> // std::runtime_error
 #include <sstream> // std::stringstream
 #include <random>
+#include <math.h>
+
+
+double max(double x,double y) {
+  if (x>y) {
+      return x;
+  }else{
+      return y;
+  }
+}
+
+double sigmoid(double x) {
+    return 1/(1+exp(-x));
+}
+
+
 
 class Matrix {
 private:
@@ -116,6 +132,27 @@ public:
         }
     }
 
+
+    //this is for using Relu as a activation function
+    void ReluActivation(const Matrix& m) {
+        matrix.assign(m.matrix.size(),std::vector<double>(m.matrix[0].size(), 0.0));
+        for (int i = 0; i < m.matrix.size(); i++) {
+            for (int j = 0; j < m.matrix[0].size(); j++) {
+                matrix[i][j] = max(0,m.matrix[i][j]);
+            }
+        }
+    }
+
+    void sigmoidActivation(const Matrix& m) {
+        matrix.assign(m.matrix.size(),std::vector<double>(m.matrix[0].size(), 0.0));
+        for (int i = 0; i < m.matrix.size(); i++) {
+            for (int j = 0; j < m.matrix[0].size(); j++) {
+                matrix[i][j] = sigmoid(m.matrix[i][j]);
+            }
+        }
+    }
+
+
 };
 
 class Layer{
@@ -128,17 +165,27 @@ public:
         bias.RIC(-0.5,0.5,1,output_size);
     }
 
+    Matrix Activation(Matrix input) {
+        Matrix result;
+        result.ReluActivation(input);
+        return result;
+    }
+
+
     Matrix forward(Matrix input) {
         Matrix res,result;
         res.multiply(input,weights);
         result.add(res,bias);
-
+        result=Activation(result);
         return result;
     }
+
+
+
 };
 
-std::vector<std::pair<int,std::vector<int>>> read_csv(std::string filename) {
-    std::vector<std::pair<int,std::vector<int>>> result;
+std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::string filename) {
+    std::vector<std::pair<std::vector<double>,std::vector<double>>> result;
 
     std::ifstream myFile(filename);
     if (!myFile.is_open()) {
@@ -150,9 +197,9 @@ std::vector<std::pair<int,std::vector<int>>> read_csv(std::string filename) {
 
     while (std::getline(myFile,line)) {
         std::stringstream ss(line);
-        std::pair<int, std::vector<int>> row;
-        int label;
-        ss>>label;
+        std::pair<std::vector<double>, std::vector<double>> row;
+        std::vector<double> label;
+        label[val]=1;q
         if (ss.peek()==',') ss.ignore();
         std::vector<int> pixels;
         while (ss>>val){
