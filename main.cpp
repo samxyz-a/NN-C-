@@ -32,6 +32,7 @@ private:
     std::vector<std::vector<double>> matrix;
 
 public:
+
     double get(int pos1,int pos2) {
         return matrix.at(pos1).at(pos2);
     }
@@ -168,6 +169,19 @@ public:
         }
         return total_loss / (predicted.matrix.size() * predicted.matrix[0].size());
     }
+
+    void Relu_Derivative(const Matrix& m) {
+        matrix.assign(m.matrix.size(),std::vector<double>(m.matrix[0].size(), 0.0));
+        for (int i = 0; i < m.matrix.size(); i++) {
+            for (int j = 0; j < m.matrix[0].size(); j++) {
+                if (m.matrix[i][j]>0) {
+                    matrix[i][j]=1;
+                }else {
+                    matrix[i][j]=0;
+                }
+            }
+        }
+    }
             
 };
 
@@ -175,6 +189,7 @@ class Layer{
 public:
     Matrix weights; //
     Matrix bias;
+    Matrix pre_act;
 
     Layer(int input_size,int output_size) {
         weights.RIC(-0.5,0.5,input_size,output_size);
@@ -192,30 +207,45 @@ public:
         Matrix res,result;
         res.multiply(input,weights);
         result.add(res,bias);
+        pre_act=result;
         result=Activation(result);
         return result;
     }
 
     Matrix backward(Matrix input, Matrix grad_output, double learning_rate) {
-        Matrix grad_input,grad_weights,grad_bias, weights_T;
+        Matrix grad_input,grad_weights,grad_bias, weights_T,dz,dy,input_t;
+        dy.Relu_Derivative(pre_act);
+        dz.HP(grad_output,dy);
         weights_T.transpose(weights);
-        grad_input.multiply(grad_output,weights_T);
-        grad_weights.multiply(input,grad_output);
-        grad_bias=grad_output;
+        input_t.transpose(input);
+        grad_input.multiply(dz,weights_T);
+        grad_weights.multiply(input_t,dz);
+        grad_bias=dz;
+
 
         //update weights and bias
         Matrix scaled_grad_weights,scaled_grad_bias;
         scaled_grad_weights.SM(grad_weights,-learning_rate);
         scaled_grad_bias.SM(grad_bias,-learning_rate);
 
-        weights.add(weights,scaled_grad_weights);
-        bias.add(bias,scaled_grad_bias);
+        Matrix weights_c=weights;
+        Matrix bias_c=bias;
+
+        weights.add(weights_c,scaled_grad_weights);
+        bias.add(bias_c,scaled_grad_bias);
 
         return grad_input;
     }
 
 
-
+    void print() {
+        for (int i=0;i<matrix.size();i++) {
+            for (int j=0;j<matrix[0].size();j++) {
+                std::cout<<matrix[i][j]<<" ";
+            }
+            std::cout<<"\n";
+        }
+    }
 };
 
 std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::string filename) {
@@ -276,6 +306,20 @@ int main() {
         std::cout << "\n\n";
         sample++;
     }
+
+
+    //for testing this matrix
+
+    // Matrix m1,m2,m3;
+    // m2.RIC(5,10,2,2);
+    // m1.RIC(5,10,2,2);
+    // m3.add(m1,m2);
+    //
+    // m1.print();
+    // m2.print();
+    // m3.print();
+
+
     return EXIT_SUCCESS;
 }
 
