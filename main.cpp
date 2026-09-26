@@ -33,6 +33,13 @@ private:
 
 public:
 
+    Matrix() {};
+
+    Matrix(const std::vector<double>& v) {
+        matrix.push_back(v);
+    }
+
+
     double get(int pos1,int pos2) {
         return matrix.at(pos1).at(pos2);
     }
@@ -71,6 +78,22 @@ public:
                 double sum=0;
                 sum+=m1.matrix[i][j]+m2.matrix[i][j];
                 matrix[i][j]=sum;
+            }
+        }
+    }
+
+    void subtract(const Matrix& m1,const Matrix& m2) {
+        matrix.assign(m1.matrix.size(),std::vector<double>(m2.matrix[0].size(), 0.0));
+
+        if (m1.matrix[0].size()!=m2.matrix[0].size() || m1.matrix.size()!=m2.matrix.size()) {
+            throw std::runtime_error("Invalid Addition");
+        }
+
+        for (int i=0;i<m1.matrix.size();i++) {
+            for (int j=0;j<m1.matrix[0].size();j++) {
+                double result=0;
+                result+=m1.matrix[i][j]-m2.matrix[i][j];
+                matrix[i][j]=result;
             }
         }
     }
@@ -182,6 +205,15 @@ public:
             }
         }
     }
+
+    void print() {
+        for (int i=0;i<matrix.size();i++) {
+            for (int j=0;j<matrix[0].size();j++) {
+                std::cout<<matrix[i][j]<<" ";
+            }
+            std::cout<<"\n";
+        }
+    }
             
 };
 
@@ -191,9 +223,12 @@ public:
     Matrix bias;
     Matrix pre_act;
 
-    Layer(int input_size,int output_size) {
+    bool use_activation;
+
+    Layer(int input_size,int output_size,bool activation=true) {
         weights.RIC(-0.5,0.5,input_size,output_size);
         bias.RIC(-0.5,0.5,1,output_size);
+        use_activation=activation;
     }
 
     Matrix Activation(Matrix input) {
@@ -208,14 +243,20 @@ public:
         res.multiply(input,weights);
         result.add(res,bias);
         pre_act=result;
-        result=Activation(result);
+        if (use_activation) {
+            result=Activation(result);
+        }
         return result;
     }
 
     Matrix backward(Matrix input, Matrix grad_output, double learning_rate) {
         Matrix grad_input,grad_weights,grad_bias, weights_T,dz,dy,input_t;
-        dy.Relu_Derivative(pre_act);
-        dz.HP(grad_output,dy);
+        if (use_activation) {
+            dy.Relu_Derivative(pre_act);
+            dz.HP(grad_output,dy);
+        }else {
+            dz=grad_output;
+        }
         weights_T.transpose(weights);
         input_t.transpose(input);
         grad_input.multiply(dz,weights_T);
@@ -238,15 +279,51 @@ public:
     }
 
 
-    void print() {
-        for (int i=0;i<matrix.size();i++) {
-            for (int j=0;j<matrix[0].size();j++) {
-                std::cout<<matrix[i][j]<<" ";
+
+};
+
+class Network {
+public:
+
+    std::vector<Layer> layers;
+
+    Network() {
+        layers.emplace_back(784, 128,true);
+        layers.emplace_back(128, 64,true);
+        layers.emplace_back(64, 10,false);
+    }
+
+    void train(const std::vector<std::pair<std::vector<double>, std::vector<double>>>& data,int epochs,double learning_rate) {
+
+        for (int e=0;e<epochs;e++) {
+            double average_loss=0;
+            for (const auto& sample_data:data) {
+                const auto& labelv=sample_data.first;
+                const auto& pixelv=sample_data.second;
+                Matrix input(pixelv);
+                Matrix output(labelv);
+                Matrix o1=layers[0].forward(input);
+                Matrix o2=layers[1].forward(o1);
+                Matrix o3=layers[2].forward(o2);
+                Matrix lossM,Grad_O,temp;
+                double loss_value = lossM.loss(o3, output);
+                Grad_O.subtract(o3,output);
+                temp = Grad_O;
+                Grad_O.SM(temp,0.2);
+
+                Matrix b1=layers[2].backward(o2,Grad_O,learning_rate);
+                Matrix b2=layers[1].backward(o1,b1,learning_rate);
+                Matrix b3=layers[0].backward(input,b2,learning_rate);
+
+                average_loss+=loss_value;
+
             }
-            std::cout<<"\n";
+            std::cout<<"One epoch Average Loss Value: "<<average_loss/data.size()<<std::endl;
         }
     }
 };
+
+
 
 std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::string filename) {
     std::vector<std::pair<std::vector<double>,std::vector<double>>> result;
@@ -284,28 +361,28 @@ std::vector<std::pair<std::vector<double>,std::vector<double>>> read_csv(std::st
 
 
 int main() {
-    std::vector<std::pair<std::vector<double>, std::vector<double>>> data=read_csv("../data/mnist_train.csv");
-    int sample = 0;
-
-    for (const auto& [labelv, pixelv] : data) {
-        std::cout << "Sample: " << sample << "\n";
-        std::cout << "Label: " ;
-
-        for (const auto& label : labelv) {
-            std::cout<<label<<" ";
-        }
-
-        std::cout<<"\n";
-
-        std::cout << "Pixels: ";
-
-        for (const auto& pixel : pixelv) {
-            std::cout << pixel << " ";
-        }
-
-        std::cout << "\n\n";
-        sample++;
-    }
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> data=read_csv("../data/mnist_test_3.csv");
+    // int sample = 0;
+    //
+    // for (const auto& [labelv, pixelv] : data) {
+    //     std::cout << "Sample: " << sample << "\n";
+    //     std::cout << "Label: " ;
+    //
+    //     for (const auto& label : labelv) {
+    //         std::cout<<label<<" ";
+    //     }
+    //
+    //     std::cout<<"\n";
+    //
+    //     std::cout << "Pixels: ";
+    //
+    //     for (const auto& pixel : pixelv) {
+    //         std::cout << pixel << " ";
+    //     }
+    //
+    //     std::cout << "\n\n";
+    //     sample++;
+    // }
 
 
     //for testing this matrix
@@ -318,6 +395,11 @@ int main() {
     // m1.print();
     // m2.print();
     // m3.print();
+
+
+    Network n;
+
+    n.train(data,10,0.001);
 
 
     return EXIT_SUCCESS;
